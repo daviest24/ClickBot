@@ -43,16 +43,21 @@ namespace ClickBot
 			MouseController.SetCursorPosition(new MouseController.MousePoint(261, 85));
 			MouseController.MouseEvent(MouseController.MouseEventFlags.LeftDown | MouseController.MouseEventFlags.LeftUp, 2299, 111);
 
-			ScreenController.CaptureAndSave(@"D:\SSM INTERNAL DEVELOPMENT\OTHER\ClickBot\Test.png", CaptureMode.Screen, ImageFormat.Png);
-			var bitmap = ScreenController.Capture(CaptureMode.Screen);
+			int offsetWidth = 600;
+			int offsetHeight = 400;
+			Rect rec = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
+
+			ScreenController.CaptureAndSave(rec, @"C:\Users\Davies\Documents\GitHub\ClickBot\Test.png", CaptureMode.Screen, ImageFormat.Png);
+			var bitmap = ScreenController.Capture(rec, CaptureMode.Screen);
 
 			//Iterate whole bitmap to findout the picked color
-			for (int i = 0; i < bitmap.Height; i++)
+			List<System.Drawing.Point> points = new List<System.Drawing.Point>();
+			for (int y = 0; y < bitmap.Height; y++)
 			{
-				for (int j = 0; j < bitmap.Width; j++)
+				for (int x = 0; x < bitmap.Width; x++)
 				{
 					//Get the color at each pixel
-					System.Drawing.Color now_color = bitmap.GetPixel(j, i);
+					System.Drawing.Color now_color = bitmap.GetPixel(x, y);
 
 					//Compare Pixel's Color ARGB property with the picked color's ARGB property 
 					System.Drawing.Color color = new System.Drawing.Color();
@@ -60,8 +65,7 @@ namespace ClickBot
 
 					if (now_color.ToArgb() == color.ToArgb())
 					{
-						MessageBox.Show("Color Found!");
-						break;
+						points.Add(new System.Drawing.Point(x, y));
 					}
 				}
 			}
@@ -101,5 +105,22 @@ namespace ClickBot
 
 				//bitmap.UnlockBits(data);
 			}
+
+		private void BtnDrawRect_Click(object sender, RoutedEventArgs e)
+		{
+			Graphics g = Graphics.FromHwnd(IntPtr.Zero);
+
+			int offsetWidth = 0;
+			int offsetHeight = 0;
+			System.Drawing.Rectangle rec = new System.Drawing.Rectangle(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
+
+			System.Drawing.Brush brsh = new SolidBrush(System.Drawing.Color.Red);
+			System.Drawing.Pen pen = new System.Drawing.Pen(brsh);
+
+			g.DrawRectangle(pen, rec);
+
+			brsh.Dispose();
+			g.Dispose();
+		}
 	}
 }

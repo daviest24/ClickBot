@@ -9,5 +9,6 @@
     <Grid>
         <Button Content="Click" HorizontalAlignment="Left" Margin="275,155,0,0" VerticalAlignment="Top" Width="215" Height="95" Click="Button_Click"/>
         <Label x:Name="lblPoint" Content="" HorizontalAlignment="Left" Margin="275,274,0,0" VerticalAlignment="Top" Width="210"/>
+        <Button x:Name="btnDrawRect" Content="Draw Rectangle" HorizontalAlignment="Left" Height="50" Margin="495,200,0,0" VerticalAlignment="Top" Width="113" Click="BtnDrawRect_Click"/>
     </Grid>
 </Window>
