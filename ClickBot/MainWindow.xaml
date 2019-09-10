@@ -5,14 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClickBot"
         mc:Ignorable="d"
-        Title="MainWindow" Height="492" Width="720px">
+        Title="MainWindow" Height="582" Width="720px">
     <Grid Margin="5">
         <Grid.RowDefinitions>
             <RowDefinition Height="280px"/>
 
         </Grid.RowDefinitions>
 
-        <Image Name="imgArea" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="ImgArea_MouseLeftButtonDown"/>
+        <Image Name="imgArea" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="ImgArea_MouseLeftButtonDown" MouseRightButtonDown="ImgArea_MouseRightButtonDown"/>
 
 
         <Button Content="Click" HorizontalAlignment="Left" Margin="243,320,0,-134" VerticalAlignment="Top" Width="215" Height="95" Click="Button_Click"/>
@@ -20,5 +20,8 @@
         <Button x:Name="btnDrawRect" Content="Draw Rectangle" HorizontalAlignment="Left" Height="50" Margin="463,365,0,-134" VerticalAlignment="Top" Width="113" Click="BtnDrawRect_Click"/>
         <Button x:Name="btnTakeImage" Content="Take Image" HorizontalAlignment="Left" Height="50" Margin="125,365,0,-134" VerticalAlignment="Top" Width="113" Click="BtnTakeImage_Click"/>
         <Button x:Name="btnEyeDropper" Content="Dropper" HorizontalAlignment="Left" Height="50" Margin="65,365,0,-134" VerticalAlignment="Top" Width="55" Click="BtnEyeDropper_Click"/>
+       
+        <Canvas x:Name="colourActive" HorizontalAlignment="Left" Height="40" Margin="65,320,0,-79" VerticalAlignment="Top" Width="55"/>
+        <Canvas x:Name="colourInactive" HorizontalAlignment="Left" Height="40" Margin="125,320,0,-79" VerticalAlignment="Top" Width="55"/>
     </Grid>
 </Window>

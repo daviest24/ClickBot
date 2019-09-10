@@ -15,6 +15,7 @@ using System.Drawing.Imaging;
 using System.Drawing;
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace ClickBot
 {
@@ -40,8 +41,6 @@ namespace ClickBot
 		private static System.Drawing.Color colour = System.Drawing.Color.FromArgb(253, 203, 120);
 
 
-
-
 		public MainWindow()
 		{
 			InitializeComponent();
@@ -57,9 +56,50 @@ namespace ClickBot
 
 		private void ImgArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
+			BitmapSource screenimage = InteropHelper.CaptureRegion(InteropHelper.GetDesktopWindow(),
+																	   (int)SystemParameters.VirtualScreenLeft,
+																	   (int)SystemParameters.VirtualScreenTop,
+																	   (int)SystemParameters.PrimaryScreenWidth,
+																	   (int)SystemParameters.PrimaryScreenHeight);
+
+			Bitmap bitmap = BitmapFromSource(screenimage);
+
 			var mousePos = MouseController.GetCursorPosition();
 
-			System.Drawing.Color currPixel = image.GetPixel(mousePos.X, mousePos.Y);
+			System.Drawing.Color currPixel = bitmap.GetPixel(mousePos.X, mousePos.Y);
+
+			colourActive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)currPixel.R, (byte)currPixel.G, (byte)currPixel.B));
+		}
+
+		private void ImgArea_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+		{
+			BitmapSource screenimage = InteropHelper.CaptureRegion(InteropHelper.GetDesktopWindow(),
+														   (int)SystemParameters.VirtualScreenLeft,
+														   (int)SystemParameters.VirtualScreenTop,
+														   (int)SystemParameters.PrimaryScreenWidth,
+														   (int)SystemParameters.PrimaryScreenHeight);
+
+			Bitmap bitmap = BitmapFromSource(screenimage);
+
+			var mousePos = MouseController.GetCursorPosition();
+
+			System.Drawing.Color currPixel = bitmap.GetPixel(mousePos.X, mousePos.Y);
+
+			colourInactive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)currPixel.R, (byte)currPixel.G, (byte)currPixel.B));
+		}
+
+		private System.Drawing.Bitmap BitmapFromSource(BitmapSource bitmapsource)
+		{
+			System.Drawing.Bitmap bitmap;
+			using (MemoryStream outStream = new MemoryStream())
+			{
+				BitmapEncoder enc = new BmpBitmapEncoder();
+
+				enc.Frames.Add(BitmapFrame.Create(bitmapsource));
+				enc.Save(outStream);
+				bitmap = new System.Drawing.Bitmap(outStream);
+			}
+			return bitmap;
 		}
 
 		private void DispatcherTimer_Tick(object sender, EventArgs e)
