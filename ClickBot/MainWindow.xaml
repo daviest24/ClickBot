@@ -15,13 +15,14 @@
         <Image Name="imgArea" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="ImgArea_MouseLeftButtonDown" MouseRightButtonDown="ImgArea_MouseRightButtonDown"/>
 
 
-        <Button Content="Click" HorizontalAlignment="Left" Margin="243,320,0,-134" VerticalAlignment="Top" Width="215" Height="95" Click="Button_Click"/>
+        <Button Content="Start Fishing" HorizontalAlignment="Left" Margin="243,320,0,-134" VerticalAlignment="Top" Width="215" Height="95" Click="btnStartFishing_Click"/>
         <Label x:Name="lblPoint" Content="" HorizontalAlignment="Left" Margin="243,420,0,-163" VerticalAlignment="Top" Width="215"/>
         <Button x:Name="btnDrawRect" Content="Draw Rectangle" HorizontalAlignment="Left" Height="50" Margin="463,365,0,-134" VerticalAlignment="Top" Width="113" Click="BtnDrawRect_Click"/>
         <Button x:Name="btnTakeImage" Content="Take Image" HorizontalAlignment="Left" Height="50" Margin="125,365,0,-134" VerticalAlignment="Top" Width="113" Click="BtnTakeImage_Click"/>
         <Button x:Name="btnEyeDropper" Content="Dropper" HorizontalAlignment="Left" Height="50" Margin="65,365,0,-134" VerticalAlignment="Top" Width="55" Click="BtnEyeDropper_Click"/>
-       
+
         <Canvas x:Name="colourActive" HorizontalAlignment="Left" Height="40" Margin="65,320,0,-79" VerticalAlignment="Top" Width="55"/>
         <Canvas x:Name="colourInactive" HorizontalAlignment="Left" Height="40" Margin="125,320,0,-79" VerticalAlignment="Top" Width="55"/>
+        <Label x:Name="lblRunning" Content="" HorizontalAlignment="Left" Height="23" Margin="65,420,0,-162" VerticalAlignment="Top" Width="115"/>
     </Grid>
 </Window>

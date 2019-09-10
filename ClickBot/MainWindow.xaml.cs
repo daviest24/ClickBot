@@ -16,6 +16,7 @@ using System.Drawing;
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Threading;
 
 namespace ClickBot
 {
@@ -38,12 +39,14 @@ namespace ClickBot
 
 		private static Rect rec = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
 
-		private static System.Drawing.Color colour = System.Drawing.Color.FromArgb(92, 48, 50);
+		private static System.Drawing.Color colour = System.Drawing.Color.FromArgb(70, 47, 38);
 
 
 		public MainWindow()
 		{
 			InitializeComponent();
+
+			lblRunning.Content = "Stopped...";
 
 			colourActive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)92, (byte)48, (byte)50));
 
@@ -54,6 +57,36 @@ namespace ClickBot
 			imageTimer.Tick += ImageTimer_Tick;
 			imageTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
 		    //imageTimer.Start();
+		}
+
+		bool started = false;
+		private void btnStartFishing_Click(object sender, RoutedEventArgs e)
+		{
+			if (started == false)
+			{
+				started = true;
+
+				StartFishing();
+
+				lblRunning.Content = "Running...";
+			}
+			else
+			{
+				started = false;
+
+				imageTimer.Stop();
+
+				lblRunning.Content = "Stopped...";
+			}
+		}
+
+		private void StartFishing()
+		{
+			KeyboardController.CastRod();
+
+			Thread.Sleep(3000);
+
+			imageTimer.Start();
 		}
 
 		private void ImgArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -104,11 +137,11 @@ namespace ClickBot
 			
 			// Calculate the difference between the 
 			double yDiff = point.Y - oldpoint.Y;
-			if (point.Y < point.X && yDiff > 6)
+			if (point.Y < point.X && yDiff > 4)
 			{
 				MouseController.SetCursorPosition(new MouseController.MousePoint(point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2)));
-				//MessageBox.Show("MOVED");
-				imageTimer.Stop();
+				MouseController.MouseEvent(MouseController.MouseEventFlags.RightDown | MouseController.MouseEventFlags.RightUp, point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2));
+				//imageTimer.Stop();
 			}	
 		}
 
@@ -139,44 +172,6 @@ namespace ClickBot
 			return Math.Abs(c1.R - c2.R) < tolerance &&
 				   Math.Abs(c1.G - c2.G) < tolerance &&
 				   Math.Abs(c1.B - c2.B) < tolerance;
-		}
-
-		private void Button_Click(object sender, RoutedEventArgs e)
-		{
-			imageTimer.Start();
-			//MouseController.SetCursorPosition(new MouseController.MousePoint(261, 85));
-			//MouseController.MouseEvent(MouseController.MouseEventFlags.LeftDown | MouseController.MouseEventFlags.LeftUp, 2299, 111);
-
-			//int offsetWidth = 0;
-			//int offsetHeight = 0;
-			//Rect rec = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
-
-			//ScreenController.CaptureAndSave(rec, @"C:\Users\tdavies\Documents\GitHub\ClickBot\Test.png", CaptureMode.Window, ImageFormat.Png);
-			//var bitmap = ScreenController.Capture(rec, CaptureMode.Screen);
-
-			////Iterate whole bitmap to findout the picked color
-			//List<System.Drawing.Point> points = new List<System.Drawing.Point>();
-			//for (int y = 0; y < bitmap.Height; y++)
-			//{
-			//	for (int x = 0; x < bitmap.Width; x++)
-			//	{
-			//		//Get the color at each pixel
-			//		System.Drawing.Color now_color = bitmap.GetPixel(x, y);
-
-			//		//Compare Pixel's Color ARGB property with the picked color's ARGB property 
-			//		System.Drawing.Color color = new System.Drawing.Color();
-			//		color = System.Drawing.Color.FromArgb(253, 203, 120);
-
-			//		if (now_color.ToArgb() == color.ToArgb())
-			//		{
-			//			points.Add(new System.Drawing.Point(x, y));
-			//		}
-			//	}
-			//}
-
-			//System.Drawing.Point center = CalculateCenterOfPoints(points);
-
-			//MouseController.SetCursorPosition(new MouseController.MousePoint(center.X, center.Y));
 		}
 
 		private System.Drawing.Point CalculateCenterOfPoints(List<System.Drawing.Point> points)
@@ -273,6 +268,40 @@ namespace ClickBot
 		}
 	}
 }
+
+//MouseController.SetCursorPosition(new MouseController.MousePoint(261, 85));
+//MouseController.MouseEvent(MouseController.MouseEventFlags.LeftDown | MouseController.MouseEventFlags.LeftUp, 2299, 111);
+
+//int offsetWidth = 0;
+//int offsetHeight = 0;
+//Rect rec = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
+
+//ScreenController.CaptureAndSave(rec, @"C:\Users\tdavies\Documents\GitHub\ClickBot\Test.png", CaptureMode.Window, ImageFormat.Png);
+//var bitmap = ScreenController.Capture(rec, CaptureMode.Screen);
+
+////Iterate whole bitmap to findout the picked color
+//List<System.Drawing.Point> points = new List<System.Drawing.Point>();
+//for (int y = 0; y < bitmap.Height; y++)
+//{
+//	for (int x = 0; x < bitmap.Width; x++)
+//	{
+//		//Get the color at each pixel
+//		System.Drawing.Color now_color = bitmap.GetPixel(x, y);
+
+//		//Compare Pixel's Color ARGB property with the picked color's ARGB property 
+//		System.Drawing.Color color = new System.Drawing.Color();
+//		color = System.Drawing.Color.FromArgb(253, 203, 120);
+
+//		if (now_color.ToArgb() == color.ToArgb())
+//		{
+//			points.Add(new System.Drawing.Point(x, y));
+//		}
+//	}
+//}
+
+//System.Drawing.Point center = CalculateCenterOfPoints(points);
+
+//MouseController.SetCursorPosition(new MouseController.MousePoint(center.X, center.Y));
 
 //BitmapData data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);  // make sure you check the pixel format as you will be looking directly at memory
 
