@@ -75,57 +75,6 @@ namespace ClickBot
 
 		public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
 
-		public static BitmapSource CaptureRegion(IntPtr hWnd, int x, int y, int width, int height)
-		{
-			IntPtr sourceDC = IntPtr.Zero;
-			IntPtr targetDC = IntPtr.Zero;
-			IntPtr compatibleBitmapHandle = IntPtr.Zero;
-			BitmapSource bitmap = null;
-
-			try
-			{
-				// gets the main desktop and all open windows
-				sourceDC = InteropHelper.GetDC(InteropHelper.GetDesktopWindow());
-
-				//sourceDC = User32.GetDC(hWnd);
-				targetDC = InteropHelper.CreateCompatibleDC(sourceDC);
-
-				// create a bitmap compatible with our target DC
-				compatibleBitmapHandle = InteropHelper.CreateCompatibleBitmap(sourceDC, width, height);
-
-				// gets the bitmap into the target device context
-				InteropHelper.SelectObject(targetDC, compatibleBitmapHandle);
-
-				// copy from source to destination
-				InteropHelper.BitBlt(targetDC, 0, 0, width, height, sourceDC, x, y, InteropHelper.SRCCOPY);
-
-				// Here's the WPF glue to make it all work. It converts from an
-				// hBitmap to a BitmapSource. Love the WPF interop functions
-				bitmap = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
-					compatibleBitmapHandle, IntPtr.Zero, Int32Rect.Empty,
-					BitmapSizeOptions.FromEmptyOptions());
-
-			}
-			catch (Exception ex)
-			{
-
-			}
-			finally
-			{
-				DeleteObject(compatibleBitmapHandle);
-				ReleaseDC(IntPtr.Zero, sourceDC);
-				ReleaseDC(IntPtr.Zero, targetDC);
-			}
-
-			return bitmap;
-		}
-
-		public static string ConvertToString(Brush brush)
-		{
-			return string.Format("#{0}", brush.ToString().Substring(3));
-		}
-
-
 	}
 
 	enum IDC_STANDARD_CURSORS

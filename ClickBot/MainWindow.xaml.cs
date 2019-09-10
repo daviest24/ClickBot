@@ -38,12 +38,14 @@ namespace ClickBot
 
 		private static Rect rec = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
 
-		private static System.Drawing.Color colour = System.Drawing.Color.FromArgb(253, 203, 120);
+		private static System.Drawing.Color colour = System.Drawing.Color.FromArgb(92, 48, 50);
 
 
 		public MainWindow()
 		{
 			InitializeComponent();
+
+			colourActive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)92, (byte)48, (byte)50));
 
 			dispatcherTimer.Tick += DispatcherTimer_Tick;
 			dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
@@ -56,30 +58,20 @@ namespace ClickBot
 
 		private void ImgArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
-			BitmapSource screenimage = InteropHelper.CaptureRegion(InteropHelper.GetDesktopWindow(),
-																	   (int)SystemParameters.VirtualScreenLeft,
-																	   (int)SystemParameters.VirtualScreenTop,
-																	   (int)SystemParameters.PrimaryScreenWidth,
-																	   (int)SystemParameters.PrimaryScreenHeight);
-
-			Bitmap bitmap = BitmapFromSource(screenimage);
+			Bitmap bitmap = ScreenController.Capture(new Rect(0, 0, 1920, 1080), CaptureMode.Window);
 
 			var mousePos = MouseController.GetCursorPosition();
 
 			System.Drawing.Color currPixel = bitmap.GetPixel(mousePos.X, mousePos.Y);
+
+			colour = currPixel;
 
 			colourActive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)currPixel.R, (byte)currPixel.G, (byte)currPixel.B));
 		}
 
 		private void ImgArea_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
 		{
-			BitmapSource screenimage = InteropHelper.CaptureRegion(InteropHelper.GetDesktopWindow(),
-														   (int)SystemParameters.VirtualScreenLeft,
-														   (int)SystemParameters.VirtualScreenTop,
-														   (int)SystemParameters.PrimaryScreenWidth,
-														   (int)SystemParameters.PrimaryScreenHeight);
-
-			Bitmap bitmap = BitmapFromSource(screenimage);
+			Bitmap bitmap = ScreenController.Capture(new Rect(0, 0, 1920, 1080), CaptureMode.Window);
 
 			var mousePos = MouseController.GetCursorPosition();
 
@@ -88,19 +80,7 @@ namespace ClickBot
 			colourInactive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)currPixel.R, (byte)currPixel.G, (byte)currPixel.B));
 		}
 
-		private System.Drawing.Bitmap BitmapFromSource(BitmapSource bitmapsource)
-		{
-			System.Drawing.Bitmap bitmap;
-			using (MemoryStream outStream = new MemoryStream())
-			{
-				BitmapEncoder enc = new BmpBitmapEncoder();
 
-				enc.Frames.Add(BitmapFrame.Create(bitmapsource));
-				enc.Save(outStream);
-				bitmap = new System.Drawing.Bitmap(outStream);
-			}
-			return bitmap;
-		}
 
 		private void DispatcherTimer_Tick(object sender, EventArgs e)
 		{
@@ -113,15 +93,18 @@ namespace ClickBot
 		{
 			oldpoint = point;
 
+			//Bitmap bitmap = new Bitmap(@"C:\Users\Davies\Documents\GitHub\ClickBot\Test.png");
+			//ScreenController.CaptureAndSave(rec, @"C:\Users\Davies\Documents\GitHub\ClickBot\Test.png", CaptureMode.Window, ImageFormat.Png);
 			var bitmap = ScreenController.Capture(rec, CaptureMode.Screen);
 
 			point = CalculateCenterOfPoints(FindLureInImage(bitmap));
 
-			if ((point.X == 0 && point.Y == 0) || (oldpoint.X == 0 && oldpoint.Y == 0)) return;
+			if ((point.X == 0 && point.Y == 0) || (oldpoint.X == 0 && oldpoint.Y == 0))
+				return;
 			
 			// Calculate the difference between the 
-			int yDiff = point.Y - oldpoint.Y;
-			if (point.Y < point.X && yDiff > 10)
+			double yDiff = point.Y - oldpoint.Y;
+			if (point.Y < point.X && yDiff > 6)
 			{
 				MouseController.SetCursorPosition(new MouseController.MousePoint(point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2)));
 				//MessageBox.Show("MOVED");
@@ -141,13 +124,21 @@ namespace ClickBot
 					System.Drawing.Color currPixel = bitmap.GetPixel(x, y);
 
 					//Compare Pixel's colour ARGB property with the picked colour's ARGB property 
-					if (currPixel.ToArgb() == colour.ToArgb())
+					//if (currPixel.ToArgb() == colour.ToArgb())
+					if (AreColorsSimilar(currPixel, colour, 10))
 					{
 						points.Add(new System.Drawing.Point(x, y));
 					}
 				}
 			}
 			return points;
+		}
+
+		public bool AreColorsSimilar(System.Drawing.Color c1, System.Drawing.Color c2, int tolerance)
+		{
+			return Math.Abs(c1.R - c2.R) < tolerance &&
+				   Math.Abs(c1.G - c2.G) < tolerance &&
+				   Math.Abs(c1.B - c2.B) < tolerance;
 		}
 
 		private void Button_Click(object sender, RoutedEventArgs e)
@@ -265,6 +256,20 @@ namespace ClickBot
 		{
 			if (dropperEnabled == false) dropperEnabled = true;
 			else dropperEnabled = false;
+		}
+
+		private System.Drawing.Bitmap BitmapFromSource(BitmapSource bitmapsource)
+		{
+			System.Drawing.Bitmap bitmap;
+			using (MemoryStream outStream = new MemoryStream())
+			{
+				BitmapEncoder enc = new BmpBitmapEncoder();
+
+				enc.Frames.Add(BitmapFrame.Create(bitmapsource));
+				enc.Save(outStream);
+				bitmap = new System.Drawing.Bitmap(outStream);
+			}
+			return bitmap;
 		}
 	}
 }
