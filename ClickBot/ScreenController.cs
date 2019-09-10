@@ -120,7 +120,10 @@ namespace ClickBot
 				filename = Path.Combine(Environment.GetEnvironmentVariable("TEMP") ?? @"C:\Temp", filename);
 
 			filename = filename.Replace("%NOW%", DateTime.Now.ToString("yyyy-MM-dd@hh.mm.ss"));
-			image.Save(filename, format);
+
+
+			var image2 = new Bitmap(image);
+			image2.Save(filename, format);
 		}
 	}
 }
