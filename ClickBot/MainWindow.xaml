@@ -5,10 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClickBot"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Button Content="Click" HorizontalAlignment="Left" Margin="275,155,0,0" VerticalAlignment="Top" Width="215" Height="95" Click="Button_Click"/>
-        <Label x:Name="lblPoint" Content="" HorizontalAlignment="Left" Margin="275,274,0,0" VerticalAlignment="Top" Width="210"/>
-        <Button x:Name="btnDrawRect" Content="Draw Rectangle" HorizontalAlignment="Left" Height="50" Margin="495,200,0,0" VerticalAlignment="Top" Width="113" Click="BtnDrawRect_Click"/>
+        Title="MainWindow" Height="492" Width="720px">
+    <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="280px"/>
+
+        </Grid.RowDefinitions>
+
+        <Image Name="imgArea" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="ImgArea_MouseLeftButtonDown"/>
+
+
+        <Button Content="Click" HorizontalAlignment="Left" Margin="243,320,0,-134" VerticalAlignment="Top" Width="215" Height="95" Click="Button_Click"/>
+        <Label x:Name="lblPoint" Content="" HorizontalAlignment="Left" Margin="243,420,0,-163" VerticalAlignment="Top" Width="215"/>
+        <Button x:Name="btnDrawRect" Content="Draw Rectangle" HorizontalAlignment="Left" Height="50" Margin="463,365,0,-134" VerticalAlignment="Top" Width="113" Click="BtnDrawRect_Click"/>
+        <Button x:Name="btnTakeImage" Content="Take Image" HorizontalAlignment="Left" Height="50" Margin="125,365,0,-134" VerticalAlignment="Top" Width="113" Click="BtnTakeImage_Click"/>
+        <Button x:Name="btnEyeDropper" Content="Dropper" HorizontalAlignment="Left" Height="50" Margin="65,365,0,-134" VerticalAlignment="Top" Width="55" Click="BtnEyeDropper_Click"/>
     </Grid>
 </Window>

@@ -13,6 +13,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Drawing.Imaging;
 using System.Drawing;
+using System.Windows.Interop;
+using System.Runtime.InteropServices;
 
 namespace ClickBot
 {
@@ -25,7 +27,20 @@ namespace ClickBot
 		System.Windows.Threading.DispatcherTimer imageTimer = new System.Windows.Threading.DispatcherTimer();
 
 		System.Drawing.Point oldpoint = new System.Drawing.Point(0, 0);
-		System.Drawing.Point point = new System.Drawing.Point(0, 0); 
+		System.Drawing.Point point = new System.Drawing.Point(0, 0);
+
+
+		private static Bitmap image = null;
+
+		private static int offsetWidth = 1200;
+		private static  int offsetHeight = 800;
+
+		private static Rect rec = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
+
+		private static System.Drawing.Color colour = System.Drawing.Color.FromArgb(253, 203, 120);
+
+
+
 
 		public MainWindow()
 		{
@@ -36,8 +51,15 @@ namespace ClickBot
 			dispatcherTimer.Start();
 
 			imageTimer.Tick += ImageTimer_Tick;
-			imageTimer.Interval = new TimeSpan(0, 0, 1);
+			imageTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
 		    //imageTimer.Start();
+		}
+
+		private void ImgArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+		{
+			var mousePos = MouseController.GetCursorPosition();
+
+			System.Drawing.Color currPixel = image.GetPixel(mousePos.X, mousePos.Y);
 		}
 
 		private void DispatcherTimer_Tick(object sender, EventArgs e)
@@ -51,44 +73,41 @@ namespace ClickBot
 		{
 			oldpoint = point;
 
-			int offsetWidth = 0;
-			int offsetHeight = 0;
-			Rect rec = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
-
 			var bitmap = ScreenController.Capture(rec, CaptureMode.Screen);
 
-			//Iterate whole bitmap to findout the picked color
+			point = CalculateCenterOfPoints(FindLureInImage(bitmap));
+
+			if ((point.X == 0 && point.Y == 0) || (oldpoint.X == 0 && oldpoint.Y == 0)) return;
+			
+			// Calculate the difference between the 
+			int yDiff = point.Y - oldpoint.Y;
+			if (point.Y < point.X && yDiff > 10)
+			{
+				MouseController.SetCursorPosition(new MouseController.MousePoint(point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2)));
+				//MessageBox.Show("MOVED");
+				imageTimer.Stop();
+			}	
+		}
+
+		private List<System.Drawing.Point> FindLureInImage(Bitmap bitmap)
+		{
+			//Iterate whole bitmap to find the picked colour
 			List<System.Drawing.Point> points = new List<System.Drawing.Point>();
 			for (int y = 0; y < bitmap.Height; y++)
 			{
 				for (int x = 0; x < bitmap.Width; x++)
 				{
-					//Get the color at each pixel
-					System.Drawing.Color now_color = bitmap.GetPixel(x, y);
+					//Get the colour at each pixel
+					System.Drawing.Color currPixel = bitmap.GetPixel(x, y);
 
-					//Compare Pixel's Color ARGB property with the picked color's ARGB property 
-					System.Drawing.Color color = new System.Drawing.Color();
-					color = System.Drawing.Color.FromArgb(253, 203, 120);
-
-					if (now_color.ToArgb() == color.ToArgb())
+					//Compare Pixel's colour ARGB property with the picked colour's ARGB property 
+					if (currPixel.ToArgb() == colour.ToArgb())
 					{
 						points.Add(new System.Drawing.Point(x, y));
 					}
 				}
 			}
-
-			point = CalculateCenterOfPoints(points);
-
-			if ((point.X == 0 && point.Y == 0) || (oldpoint.X == 0 && oldpoint.Y == 0)) return;
-
-			int yDiff = point.Y - oldpoint.Y;
-
-			if (point.Y < point.X && yDiff > 10)
-			{
-				MessageBox.Show("MOVED");
-				imageTimer.Stop();
-			}
-		
+			return points;
 		}
 
 		private void Button_Click(object sender, RoutedEventArgs e)
@@ -131,6 +150,8 @@ namespace ClickBot
 
 		private System.Drawing.Point CalculateCenterOfPoints(List<System.Drawing.Point> points)
 		{
+			if (points.Count <= 0) return new System.Drawing.Point(0, 0);
+
 			int totalX = 0, totalY = 0;
 			foreach (System.Drawing.Point p in points)
 			{
@@ -147,17 +168,63 @@ namespace ClickBot
 		{
 			Graphics g = Graphics.FromHwnd(IntPtr.Zero);
 
-			int offsetWidth = 0;
-			int offsetHeight = 0;
-			System.Drawing.Rectangle rec = new System.Drawing.Rectangle(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
+			System.Drawing.Rectangle rect = new System.Drawing.Rectangle((int)rec.X, (int)rec.Y, (int)rec.Width, (int)rec.Height);
 
 			System.Drawing.Brush brsh = new SolidBrush(System.Drawing.Color.Red);
 			System.Drawing.Pen pen = new System.Drawing.Pen(brsh);
 
-			g.DrawRectangle(pen, rec);
+			g.DrawRectangle(pen, rect);
 
 			brsh.Dispose();
 			g.Dispose();
+		}
+
+		private void BtnTakeImage_Click(object sender, RoutedEventArgs e)
+		{
+			image = ScreenController.Capture(rec, CaptureMode.Screen);
+
+			imgArea.Source = CreateBitmapSourceFromGdiBitmap(image);
+		}
+
+
+		public static BitmapSource CreateBitmapSourceFromGdiBitmap(Bitmap bitmap)
+		{
+			if (bitmap == null)
+				throw new ArgumentNullException("bitmap");
+
+			var rect = new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height);
+
+			var bitmapData = bitmap.LockBits(
+				rect,
+				ImageLockMode.ReadWrite,
+				System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+			try
+			{
+				var size = (rect.Width * rect.Height) * 4;
+
+				return BitmapSource.Create(
+					bitmap.Width,
+					bitmap.Height,
+					bitmap.HorizontalResolution,
+					bitmap.VerticalResolution,
+					PixelFormats.Bgra32,
+					null,
+					bitmapData.Scan0,
+					size,
+					bitmapData.Stride);
+			}
+			finally
+			{
+				bitmap.UnlockBits(bitmapData);
+			}
+		}
+
+		bool dropperEnabled = false;
+		private void BtnEyeDropper_Click(object sender, RoutedEventArgs e)
+		{
+			if (dropperEnabled == false) dropperEnabled = true;
+			else dropperEnabled = false;
 		}
 	}
 }
