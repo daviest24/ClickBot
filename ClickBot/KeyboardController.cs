@@ -21,7 +21,7 @@ namespace ClickBot
 
 
 		//// Send a series of key presses to the Calculator application.
-		public static void CastRod()
+		public static void Press7Key()
 		{
 			// Get a handle to the Calculator application. The window class
 			// and window name were obtained using the Spy++ tool.

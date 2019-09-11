@@ -17,6 +17,7 @@ using System.Windows.Interop;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ClickBot
 {
@@ -25,68 +26,124 @@ namespace ClickBot
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
-		System.Windows.Threading.DispatcherTimer imageTimer = new System.Windows.Threading.DispatcherTimer();
+		System.Windows.Threading.DispatcherTimer screenCoordsTimer = new System.Windows.Threading.DispatcherTimer();
 
 		System.Drawing.Point oldpoint = new System.Drawing.Point(0, 0);
 		System.Drawing.Point point = new System.Drawing.Point(0, 0);
 
-
-		private static Bitmap image = null;
+		private static Bitmap imgCapture = null;
 
 		private static int offsetWidth = 1200;
 		private static  int offsetHeight = 800;
 
-		private static Rect rec = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
+		private static Rect scanArea = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
 
-		private static System.Drawing.Color colour = System.Drawing.Color.FromArgb(70, 47, 38);
+		//private static System.Drawing.Color colour = System.Drawing.Color.FromArgb(70, 47, 38);
+		private static System.Drawing.Color colourCheck = System.Drawing.Color.FromArgb(0, 132, 125);
 
+
+		System.Windows.Threading.DispatcherTimer loopTimer = new System.Windows.Threading.DispatcherTimer();
+		private static bool isStarted = false;
+		private static bool inLoop = false;
+		private static bool isScanning = false;
+		private void Start()
+		{
+			loopTimer.Tick += LoopTimer_Tick;
+			loopTimer.Interval = new TimeSpan(0, 0, 30);
+
+			while (isStarted)
+			{
+				//KeyboardController.Press7Key();
+
+				loopTimer.Start();
+				inLoop = true;
+
+				while (inLoop && isStarted)
+				{
+					isScanning = true;
+
+					while (isScanning && inLoop && isStarted)
+					{
+						if (ObjectMoved())
+						{
+							MouseController.SetCursorPosition(new MouseController.MousePoint(point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2)));
+							MouseController.MouseEvent(MouseController.MouseEventFlags.RightDown | MouseController.MouseEventFlags.RightUp, point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2));
+							isScanning = false;
+							inLoop = false;
+						}
+					}
+				}
+			}
+
+			if (loopTimer.IsEnabled) loopTimer.Stop();
+
+			return;
+		}
+
+		private bool ObjectMoved()
+		{
+			Bitmap bitmap = null;
+
+			try
+			{
+				oldpoint = point;
+
+				bitmap = ScreenController.Capture(scanArea, CaptureMode.Screen);
+
+				point = CalculateCenterOfPoints(FindColourInImage(bitmap));
+
+				if ((point.X == 0 && point.Y == 0) || (oldpoint.X == 0 && oldpoint.Y == 0))
+					return false;
+
+				DrawPoint(point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2), 6);
+
+				// Calculate the difference between the 
+				double yDiff = point.Y - oldpoint.Y;
+				if (point.Y < point.X && yDiff > 4)
+				{
+					return true;
+				}
+				return false;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
+			finally
+			{
+				bitmap.Dispose();
+			}	
+		}
+
+		private void LoopTimer_Tick(object sender, EventArgs e)
+		{
+			inLoop = false;
+		}
+
+		private void btnStart_Click(object sender, RoutedEventArgs e)
+		{
+			if (isStarted == false)
+			{
+				isStarted = true;
+				new Task(Start).Start();
+				lblRunning.Content = "Running...";
+			}
+			else
+			{
+				isStarted = false;
+				lblRunning.Content = "Stopped...";
+			}
+		}
 
 		public MainWindow()
 		{
 			InitializeComponent();
 
-			lblRunning.Content = "Stopped...";
+			colourActive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)colourCheck.R, (byte)colourCheck.G, (byte)colourCheck.B));
 
-			colourActive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)92, (byte)48, (byte)50));
-
-			dispatcherTimer.Tick += DispatcherTimer_Tick;
-			dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
-			dispatcherTimer.Start();
-
-			imageTimer.Tick += ImageTimer_Tick;
-			imageTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
-		    //imageTimer.Start();
-		}
-
-		bool started = false;
-		private void btnStartFishing_Click(object sender, RoutedEventArgs e)
-		{
-			if (started == false)
-			{
-				started = true;
-
-				StartFishing();
-
-				lblRunning.Content = "Running...";
-			}
-			else
-			{
-				started = false;
-
-				imageTimer.Stop();
-
-				lblRunning.Content = "Stopped...";
-			}
-		}
-
-		private void StartFishing()
-		{
-			KeyboardController.CastRod();
-
-			Thread.Sleep(3000);
-
-			imageTimer.Start();
+			screenCoordsTimer.Tick += DispatcherTimer_Tick;
+			screenCoordsTimer.Interval = new TimeSpan(0, 0, 1);
+			screenCoordsTimer.Start();
 		}
 
 		private void ImgArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -97,7 +154,7 @@ namespace ClickBot
 
 			System.Drawing.Color currPixel = bitmap.GetPixel(mousePos.X, mousePos.Y);
 
-			colour = currPixel;
+			colourCheck = currPixel;
 
 			colourActive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)currPixel.R, (byte)currPixel.G, (byte)currPixel.B));
 		}
@@ -113,8 +170,6 @@ namespace ClickBot
 			colourInactive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)currPixel.R, (byte)currPixel.G, (byte)currPixel.B));
 		}
 
-
-
 		private void DispatcherTimer_Tick(object sender, EventArgs e)
 		{
 			var point = MouseController.GetCursorPosition();
@@ -122,52 +177,60 @@ namespace ClickBot
 			lblPoint.Content = $"X={point.X} Y={point.Y}";
 		}
 
-		private void ImageTimer_Tick(object sender, EventArgs e)
+		private List<System.Drawing.Point> FindColourInImage(Bitmap bitmap)
 		{
-			oldpoint = point;
+			BitmapData data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);  // make sure you check the pixel format as you will be looking directly at memory
 
-			//Bitmap bitmap = new Bitmap(@"C:\Users\Davies\Documents\GitHub\ClickBot\Test.png");
-			//ScreenController.CaptureAndSave(rec, @"C:\Users\Davies\Documents\GitHub\ClickBot\Test.png", CaptureMode.Window, ImageFormat.Png);
-			var bitmap = ScreenController.Capture(rec, CaptureMode.Screen);
-
-			point = CalculateCenterOfPoints(FindLureInImage(bitmap));
-
-			if ((point.X == 0 && point.Y == 0) || (oldpoint.X == 0 && oldpoint.Y == 0))
-				return;
-			
-			// Calculate the difference between the 
-			double yDiff = point.Y - oldpoint.Y;
-			if (point.Y < point.X && yDiff > 4)
-			{
-				MouseController.SetCursorPosition(new MouseController.MousePoint(point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2)));
-				MouseController.MouseEvent(MouseController.MouseEventFlags.RightDown | MouseController.MouseEventFlags.RightUp, point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2));
-				//imageTimer.Stop();
-			}	
-		}
-
-		private List<System.Drawing.Point> FindLureInImage(Bitmap bitmap)
-		{
-			//Iterate whole bitmap to find the picked colour
 			List<System.Drawing.Point> points = new List<System.Drawing.Point>();
-			for (int y = 0; y < bitmap.Height; y++)
+			unsafe
 			{
-				for (int x = 0; x < bitmap.Width; x++)
+				// example assumes 24bpp image.  You need to verify your pixel depth
+				// loop by row for better data locality
+				for (int y = 0; y < data.Height; ++y)
 				{
-					//Get the colour at each pixel
-					System.Drawing.Color currPixel = bitmap.GetPixel(x, y);
-
-					//Compare Pixel's colour ARGB property with the picked colour's ARGB property 
-					//if (currPixel.ToArgb() == colour.ToArgb())
-					if (AreColorsSimilar(currPixel, colour, 10))
+					byte* pRow = (byte*)data.Scan0 + y * data.Stride;
+					for (int x = 0; x < data.Width; ++x)
 					{
-						points.Add(new System.Drawing.Point(x, y));
+						// windows stores images in BGR pixel order
+						byte r = pRow[2];
+						byte g = pRow[1];
+						byte b = pRow[0];
+
+						if (IsColorSimilar(System.Drawing.Color.FromArgb(r, g, b), colourCheck, 10))
+						{
+							points.Add(new System.Drawing.Point(x, y));
+						}
+
+						// next pixel in the row
+						pRow += 3;
 					}
 				}
 			}
+
+			bitmap.UnlockBits(data);
+
+			////Iterate whole bitmap to find the picked colour
+			//List<System.Drawing.Point> points = new List<System.Drawing.Point>();
+			//for (int y = 0; y < bitmap.Height; y++)
+			//{
+			//	for (int x = 0; x < bitmap.Width; x++)
+			//	{
+			//		//Get the colour at each pixel
+			//		System.Drawing.Color currPixel = bitmap.GetPixel(x, y);
+
+			//		//Compare Pixel's colour ARGB property with the picked colour's ARGB property 
+			//		//if (currPixel.ToArgb() == colour.ToArgb())
+			//		if (AreColorsSimilar(currPixel, colour, 10))
+			//		{
+			//			points.Add(new System.Drawing.Point(x, y));
+			//		}
+			//	}
+			//}
+
 			return points;
 		}
 
-		public bool AreColorsSimilar(System.Drawing.Color c1, System.Drawing.Color c2, int tolerance)
+		public bool IsColorSimilar(System.Drawing.Color c1, System.Drawing.Color c2, int tolerance)
 		{
 			return Math.Abs(c1.R - c2.R) < tolerance &&
 				   Math.Abs(c1.G - c2.G) < tolerance &&
@@ -190,11 +253,25 @@ namespace ClickBot
 			return new System.Drawing.Point(centerX, centerY);
 		}
 
+		private void DrawPoint(int x, int y, int size)
+		{
+			Graphics g = Graphics.FromHwnd(IntPtr.Zero);
+
+			System.Drawing.Rectangle rect = new System.Drawing.Rectangle((int)x - (size / 2), (int)y - (size / 2), size, size);
+
+			System.Drawing.Brush brsh = new SolidBrush(System.Drawing.Color.Red);
+
+			g.FillEllipse(brsh, rect);
+
+			brsh.Dispose();
+			g.Dispose();
+		}
+
 		private void BtnDrawRect_Click(object sender, RoutedEventArgs e)
 		{
 			Graphics g = Graphics.FromHwnd(IntPtr.Zero);
 
-			System.Drawing.Rectangle rect = new System.Drawing.Rectangle((int)rec.X, (int)rec.Y, (int)rec.Width, (int)rec.Height);
+			System.Drawing.Rectangle rect = new System.Drawing.Rectangle((int)scanArea.X, (int)scanArea.Y, (int)scanArea.Width, (int)scanArea.Height);
 
 			System.Drawing.Brush brsh = new SolidBrush(System.Drawing.Color.Red);
 			System.Drawing.Pen pen = new System.Drawing.Pen(brsh);
@@ -207,9 +284,9 @@ namespace ClickBot
 
 		private void BtnTakeImage_Click(object sender, RoutedEventArgs e)
 		{
-			image = ScreenController.Capture(rec, CaptureMode.Screen);
+			imgCapture = ScreenController.Capture(scanArea, CaptureMode.Screen);
 
-			imgArea.Source = CreateBitmapSourceFromGdiBitmap(image);
+			imgArea.Source = CreateBitmapSourceFromGdiBitmap(imgCapture);
 		}
 
 

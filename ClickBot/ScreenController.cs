@@ -91,7 +91,7 @@ namespace ClickBot
 			Rectangle bounds;
 			bounds = new Rectangle((int)rect.Left, (int)rect.Top, (int)rect.Right - (int)rect.Left, (int)rect.Bottom - (int)rect.Top);
 
-			var result = new Bitmap(bounds.Width, bounds.Height);
+			var result = new Bitmap(bounds.Width, bounds.Height, PixelFormat.Format24bppRgb);
 			using (var g = Graphics.FromImage(result))
 				g.CopyFromScreen(new Point(bounds.Left, bounds.Top), Point.Empty, bounds.Size);
 
