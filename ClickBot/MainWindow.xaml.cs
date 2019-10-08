@@ -39,7 +39,7 @@ namespace ClickBot
 		private static Rect scanArea = new Rect(0 + (offsetWidth / 2), 0 + (offsetHeight / 2), 1920 - offsetWidth, 1080 - offsetHeight);
 
 		//private static System.Drawing.Color colour = System.Drawing.Color.FromArgb(70, 47, 38);
-		private static System.Drawing.Color colourCheck = System.Drawing.Color.FromArgb(0, 132, 125);
+		private static System.Drawing.Color colourCheck = System.Drawing.Color.FromArgb(50, 81, 109);
 
 
 		System.Windows.Threading.DispatcherTimer loopTimer = new System.Windows.Threading.DispatcherTimer();
@@ -53,7 +53,9 @@ namespace ClickBot
 
 			while (isStarted)
 			{
-				//KeyboardController.Press7Key();
+				KeyboardController.Press7Key();
+
+				Thread.Sleep(new TimeSpan(0, 0, 5));
 
 				loopTimer.Start();
 				inLoop = true;
@@ -70,12 +72,17 @@ namespace ClickBot
 							MouseController.MouseEvent(MouseController.MouseEventFlags.RightDown | MouseController.MouseEventFlags.RightUp, point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2));
 							isScanning = false;
 							inLoop = false;
+
+							Console.WriteLine("Detected Fish");
+
+							oldpoint = new System.Drawing.Point(0, 0);
+							point = new System.Drawing.Point(0, 0);
 						}
 					}
 				}
-			}
 
-			if (loopTimer.IsEnabled) loopTimer.Stop();
+				loopTimer.Stop();
+			}
 
 			return;
 		}
@@ -95,11 +102,15 @@ namespace ClickBot
 				if ((point.X == 0 && point.Y == 0) || (oldpoint.X == 0 && oldpoint.Y == 0))
 					return false;
 
-				DrawPoint(point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2), 6);
+				//DrawPoint(point.X + (offsetWidth / 2), point.Y + (offsetHeight / 2), 6);
 
 				// Calculate the difference between the 
 				double yDiff = point.Y - oldpoint.Y;
-				if (point.Y < point.X && yDiff > 4)
+
+				Console.WriteLine(yDiff);
+
+				if (yDiff > 3 || yDiff < -3)
+				//if (point.Y < point.X && (yDiff > 3 || yDiff < -3))
 				{
 					return true;
 				}
@@ -118,6 +129,7 @@ namespace ClickBot
 		private void LoopTimer_Tick(object sender, EventArgs e)
 		{
 			inLoop = false;
+			loopTimer.Stop();
 		}
 
 		private void btnStart_Click(object sender, RoutedEventArgs e)
@@ -141,9 +153,9 @@ namespace ClickBot
 
 			colourActive.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, (byte)colourCheck.R, (byte)colourCheck.G, (byte)colourCheck.B));
 
-			screenCoordsTimer.Tick += DispatcherTimer_Tick;
-			screenCoordsTimer.Interval = new TimeSpan(0, 0, 1);
-			screenCoordsTimer.Start();
+			//screenCoordsTimer.Tick += DispatcherTimer_Tick;
+			//screenCoordsTimer.Interval = new TimeSpan(0, 0, 1);
+			//screenCoordsTimer.Start();
 		}
 
 		private void ImgArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
